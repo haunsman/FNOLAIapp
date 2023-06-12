@@ -3,6 +3,28 @@ import os
 import boto3
 import botocore
 
+def generate_presigned_url(s3_client, bucket_name, object_key, expiration=3600):
+    """
+    Generate a presigned URL to share an S3 object
+
+    :param s3_client: Boto3 S3 client
+    :param bucket_name: string
+    :param object_key: string
+    :param expiration: Time in seconds for the presigned URL to remain valid
+    :return: Presigned URL as string. If error, returns None.
+    """
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': bucket_name,
+                                                            'Key': object_key},
+                                                    ExpiresIn=expiration)
+    except botocore.exceptions.ClientError as e:
+        # If there's a client error, return None.
+        return None
+
+    # The response contains the presigned URL
+    return response
+
 def process_file(file_url):
     client = ai.Client('5a030b7d-af35-4e17-a471-28a9a253c5b7')
 
@@ -26,41 +48,16 @@ def process_file(file_url):
     # Construct the S3 key for the file
     s3_key = f"uploads/{filename}"
 
-    try:
-        file_object = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
-    except Exception as e:
-        return {'status': 'error', 'message': f'Error getting file from S3: {str(e)}'}
+    presigned_url = generate_presigned_url(s3_client, S3_BUCKET_NAME, s3_key)
 
-    presigned_url = s3_client.generate_presigned_url('get_object',
-                                                     Params={'Bucket': S3_BUCKET_NAME, 'Key': s3_key},
-                                                     ExpiresIn=3600)  # URL valid for 1 hour
+    if presigned_url is None:
+        return {'status': 'error', 'message': 'Could not generate presigned URL'}
 
-    client.create_jobs(
-        app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
-        inputs=[{"documentUrl": presigned_url}],
-    )
-
-    return presigned_url
-
-
-    # Extract the filename from the file_url
-    filename = os.path.basename(file_url)
-
-    # Construct the S3 key for the file
-    s3_key = f"uploads/{filename}"
-
-    try:
-        file_object = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
-    except Exception as e:
-        return {'status': 'error', 'message': f'Error getting file from S3: {str(e)}'}
-
-    file_content = file_object["Body"].read()
-
-    # Now you can use the file_content with your AI client
+    # Now you can use the presigned URL with your AI client
     response = client.upload_data(
         mimeType="application/pdf",
-        path=file_url,
-        file=file_content,
+        path=presigned_url,
+        file=presigned_url,
         description=filename
     )
 
@@ -70,49 +67,3 @@ def process_file(file_url):
     )
 
     return response
-
-
-
-
-
-
-
-"""def process_file(file_url):
-    client = ai.Client('5a030b7d-af35-4e17-a471-28a9a253c5b7')
-
-    try:
-        client.create_jobs(
-            app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
-            inputs=[{"documentUrl": file_url}]
-        )
-        return {'status': 'success', 'message': 'File processing initiated.'}
-    except Exception as e:
-        return {'status': 'error', 'message': 'An error occurred during processing.', 'details': str(e)}
-"""
-
-"""
-import superai as ai
-
-client = ai.Client("5a030b7d-af35-4e17-a471-28a9a253c5b7")
-
-client.create_jobs(
-    app_id="295a75b8-5e89-484c-a435-ca7f282c5bcd",
-    inputs=[{"documentUrl":"https://cdn.super.ai/invoice-example.pdf"}]
-)
-
-
-import superai as ai
-
-client = ai.Client("live_1Ab23cdEFGH4iJ5K67Lmnop8qR10STulWX_2y3Za4_B")
-
-f = open("hotel-pool-03.jpeg", "rb")
-
-response = client.upload_data(
-    mimeType="image/jpeg",
-    path="default/hotel-pool-03.jpeg",
-    file=f,
-    description="Hotel pool image 03",
-)
-
-print(response)
-"""
