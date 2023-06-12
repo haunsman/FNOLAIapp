@@ -10,3 +10,4 @@ flask_bootstrap
 superai
 boto3
 botocore
+psycopg2==2.8.6
