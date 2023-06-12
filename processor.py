@@ -2,6 +2,7 @@ import superai as ai
 import os
 import boto3
 import botocore
+import requests
 
 def generate_presigned_url(s3_client, bucket_name, object_key, expiration=3600):
     """
@@ -53,13 +54,20 @@ def process_file(file_url):
     if presigned_url is None:
         return {'status': 'error', 'message': 'Could not generate presigned URL'}
 
-    # Now you can use the presigned URL with your AI client
+    # Download the file from the presigned url
+    response = requests.get(presigned_url)
+    open(filename, 'wb').write(response.content)
+
+    # Now you can use the downloaded file with your AI client
     response = client.upload_data(
         mimeType="application/pdf",
-        path=presigned_url,
-        file=presigned_url,
+        path=filename,
+        file=open(filename, 'rb'),
         description=filename
     )
+
+    # Delete the file after uploading
+    os.remove(filename)
 
     client.create_jobs(
         app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
