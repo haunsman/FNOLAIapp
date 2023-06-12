@@ -31,6 +31,29 @@ def process_file(file_url):
     except Exception as e:
         return {'status': 'error', 'message': f'Error getting file from S3: {str(e)}'}
 
+    presigned_url = s3_client.generate_presigned_url('get_object',
+                                                     Params={'Bucket': S3_BUCKET_NAME, 'Key': s3_key},
+                                                     ExpiresIn=3600)  # URL valid for 1 hour
+
+    client.create_jobs(
+        app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
+        inputs=[{"documentUrl": presigned_url}],
+    )
+
+    return presigned_url
+
+
+    # Extract the filename from the file_url
+    filename = os.path.basename(file_url)
+
+    # Construct the S3 key for the file
+    s3_key = f"uploads/{filename}"
+
+    try:
+        file_object = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+    except Exception as e:
+        return {'status': 'error', 'message': f'Error getting file from S3: {str(e)}'}
+
     file_content = file_object["Body"].read()
 
     # Now you can use the file_content with your AI client
