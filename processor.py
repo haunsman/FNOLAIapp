@@ -3,6 +3,7 @@ import os
 import boto3
 import botocore
 import requests
+import psycopg2
 
 def generate_presigned_url(s3_client, bucket_name, object_key, expiration=3600):
     """
@@ -25,6 +26,34 @@ def generate_presigned_url(s3_client, bucket_name, object_key, expiration=3600):
 
     # The response contains the presigned URL
     return response
+
+def connect_to_postgres():
+    conn = psycopg2.connect(
+        host="db-postgresql-nyc3-37986-do-user-14227600-0.b.db.ondigitalocean.com",
+        database="ai_results",
+        user="doadmin",
+        password="AVNS_wPhHVbcFP02WDCqT_sK")
+    return conn
+
+def create_table():
+    conn = connect_to_postgres()
+    cur = conn.cursor()
+
+    create_table_query = """
+    CREATE TABLE ai_results (
+        id SERIAL PRIMARY KEY,
+        ai_id INT NOT NULL
+    );
+    """
+
+    cur.execute(create_table_query)
+
+    # Commit the transaction
+    conn.commit()
+
+    # Close the cursor and the connection
+    cur.close()
+    conn.close()
 
 def process_file(file_url):
     client = ai.Client('5a030b7d-af35-4e17-a471-28a9a253c5b7')
@@ -73,5 +102,23 @@ def process_file(file_url):
         app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
         inputs=[{"documentUrl": "data://157528/"+file_url}],
     )
+# Extract the ai_id from the response
+    ai_id = response["id"]
 
+    # Connect to the PostgreSQL database
+    conn = connect_to_postgres()
+    cur = conn.cursor()
+
+    # SQL query to insert the AI id into your table
+    insert_query = "INSERT INTO ai_results (ai_id) VALUES (%s);"
+
+    # Execute the SQL query
+    cur.execute(insert_query, (ai_id,))
+
+    # Commit the transaction
+    conn.commit()
+
+    # Close the cursor and the connection
+    cur.close()
+    conn.close()
     return response
