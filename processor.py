@@ -1,37 +1,53 @@
 import superai as ai
 import os
+import boto3
+import botocore
 
 def process_file(file_url):
     client = ai.Client('5a030b7d-af35-4e17-a471-28a9a253c5b7')
 
-    # Get the base directory path of your project
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Configure AWS S3
+    S3_BUCKET_NAME = 'fnol-files'
+    S3_REGION = 'nyc3'
+    S3_ACCESS_KEY = 'DO00PUNYAAR7YQ8DA4CG'
+    S3_SECRET_KEY = 'UdfymTzv4m0YsEnBhE0R0g0WZOcbX4yrx49EPTNZbJ0'
+
+    session = boto3.session.Session()
+    s3_client = session.client('s3',
+                            config=botocore.config.Config(s3={'addressing_style': 'virtual'}),
+                            region_name='nyc3',
+                            endpoint_url='https://nyc3.digitaloceanspaces.com',
+                            aws_access_key_id='DO00PUNYAAR7YQ8DA4CG',
+                            aws_secret_access_key='UdfymTzv4m0YsEnBhE0R0g0WZOcbX4yrx49EPTNZbJ0')
 
     # Extract the filename from the file_url
     filename = os.path.basename(file_url)
 
-    # Construct the absolute file path by joining the base directory and the filename
-    file_path = os.path.join(base_dir, 'uploads', filename)
+    # Construct the S3 key for the file
+    s3_key = f"uploads/{filename}"
 
-    if os.path.isfile(file_path):
-        # Open the file using the file path
-        with open(file_path, "rb") as f:
-            response = client.upload_data(
-                mimeType="application/pdf",
-                path=file_url,
-                file=f,
-                description=filename
-            )
-            print(file_url)
-            client.create_jobs(
-                app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
-                inputs=[{"documentUrl": "data://157528/"+file_url}],
-        
-        )
-    else:
-        return {'status': 'error', 'message': 'File not found.'}
+    try:
+        file_object = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+    except Exception as e:
+        return {'status': 'error', 'message': f'Error getting file from S3: {str(e)}'}
+
+    file_content = file_object["Body"].read()
+
+    # Now you can use the file_content with your AI client
+    response = client.upload_data(
+        mimeType="application/pdf",
+        path=file_url,
+        file=file_content,
+        description=filename
+    )
+
+    client.create_jobs(
+        app_id='295a75b8-5e89-484c-a435-ca7f282c5bcd',
+        inputs=[{"documentUrl": "data://157528/"+file_url}],
+    )
 
     return response
+
 
 
 
