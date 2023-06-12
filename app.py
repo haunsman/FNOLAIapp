@@ -48,7 +48,7 @@ def upload_file():
             # Upload file to S3 bucket
             s3_key = f"default/{filename_with_claim_id}"
             file_contents = file.read()
-            s3_client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
+            client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
 
             return redirect(url_for('upload_file'))
 
