@@ -21,8 +21,8 @@ client = session.client('s3',
                         config=botocore.config.Config(s3={'addressing_style': 'virtual'}),
                         region_name='nyc3',
                         endpoint_url='https://fnol-files.nyc3.digitaloceanspaces.com',
-                        aws_access_key_id=os.getenv('DO00PUNYAAR7YQ8DA4CG'),
-                        aws_secret_access_key=os.getenv('UdfymTzv4m0YsEnBhE0R0g0WZOcbX4yrx49EPTNZbJ0'))
+                        aws_access_key_id='DO00PUNYAAR7YQ8DA4CG',
+                        aws_secret_access_key='UdfymTzv4m0YsEnBhE0R0g0WZOcbX4yrx49EPTNZbJ0')
 
 
 def allowed_file(filename):
