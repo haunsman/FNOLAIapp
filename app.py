@@ -46,7 +46,7 @@ def upload_file():
             filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
 
             # Upload file to S3 bucket
-            s3_key = f"default/{filename_with_claim_id}"
+            s3_key = f"uploads/{filename_with_claim_id}"
             file_contents = file.read()
             client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
 
@@ -57,18 +57,28 @@ def upload_file():
 
 @app.route('/process', methods=['POST'])
 def process_file():
-    # Process the file (assuming you have the necessary logic in the processor module)
-    # ...
-
-    return redirect(url_for('processing_result'))
+    filename = request.form['filename']
+    file_url = url_for('upload_file', filename=filename, _external=True)
+    file_url = file_url.replace("?filename=", "")
+    file_url = file_url.replace("=", "")
+    result = processor.process_file(file_url)
+    
+    # Delete the file
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    os.remove(file_path)
+    
+    # Convert the result dictionary to a JSON string with double quotes for property names
+    result_json = json.dumps(result, ensure_ascii=False)
+    # Pass the JSON string to the processing_result template
+    return redirect(url_for('processing_result', result=result_json))
 
 
 @app.route('/processing_result')
 def processing_result():
-    # Get the processing result (assuming you have the necessary logic)
-    # ...
-
-    return render_template('processing_result.html')
+    result_json = request.args.get('result')
+    # Parse the JSON string back into a dictionary
+    result = json.loads(result_json)
+    return render_template('processing_result.html', result=result)
 
 
 if __name__ == "__main__":
