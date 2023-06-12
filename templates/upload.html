@@ -37,6 +37,7 @@
               <button type="submit" class="btn btn-primary btn-block">Upload</button>
             </div>
           </form>
+          {% if files %}
           <table class="table">
             <thead>
               <tr>
@@ -49,19 +50,16 @@
               <tr>
                 <td>{{ file }}</td>
                 <td>
-                  {% if file in processed_files %}
-                  <button type="button" class="btn btn-success" disabled>Processed</button>
-                  {% else %}
                   <form action="{{ url_for('process_file') }}" method="POST">
                     <input type="hidden" name="filename" value="{{ file }}">
                     <button type="submit" class="btn btn-secondary">Process</button>
                   </form>
-                  {% endif %}
                 </td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
+          {% endif %}
         </div>
       </div>
     </div>

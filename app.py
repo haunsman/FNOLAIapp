@@ -51,8 +51,12 @@ def upload_file():
             client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
 
             return redirect(url_for('upload_file'))
+        
+    # Get the list of files from the S3 bucket
+    response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='default/')
+    files = [obj['Key'].split('/')[-1] for obj in response['Contents']] if 'Contents' in response else []
 
-    return render_template('upload.html')
+    return render_template('upload.html', files=files)
 
 
 @app.route('/process', methods=['POST'])
