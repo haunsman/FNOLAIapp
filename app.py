@@ -51,9 +51,9 @@ def upload_file():
             client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
 
             return redirect(url_for('upload_file'))
-        
+
     # Get the list of files from the S3 bucket
-    response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='default/')
+    response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='uploads/')
     files = [obj['Key'].split('/')[-1] for obj in response['Contents']] if 'Contents' in response else []
 
     return render_template('upload.html', files=files)
@@ -66,11 +66,11 @@ def process_file():
     file_url = file_url.replace("?filename=", "")
     file_url = file_url.replace("=", "")
     result = processor.process_file(file_url)
-    
-    # Delete the file
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    os.remove(file_path)
-    
+
+    # Delete the file from the S3 bucket
+    s3_key = f"uploads/{filename}"
+    client.delete_object(Bucket=S3_BUCKET_NAME, Key=s3_key)
+
     # Convert the result dictionary to a JSON string with double quotes for property names
     result_json = json.dumps(result, ensure_ascii=False)
     # Pass the JSON string to the processing_result template
