@@ -6,6 +6,8 @@ import json
 import boto3
 import botocore
 import base64
+import json
+from flask import jsonify
 
 app = Flask(__name__)
 
@@ -39,35 +41,45 @@ def upload_file():
         if not isinstance(data, dict):
             return 'Invalid data: expected JSON object'
 
-        file_data = data['file']
+        file_data = data.get('file')
 
-        if 'name' not in file_data:
-            return 'No file name'
-        filename = secure_filename(file_data['name'])
+        error_messages = []
 
-        if 'claim_number' not in data:
-            return 'No claim number'
-        claim_number = data['claim_number']
+        if not file_data:
+            error_messages.append('No file data')
+        else:
+            filename = secure_filename(file_data.get('name'))
+            if not filename:
+                error_messages.append('No file name')
 
-        if 'data' not in file_data:
-            return 'No file data'
-        try:
-            file_contents = base64.b64decode(file_data['data'])
-        except:
-            return 'Invalid file data: expected base64 string'
+            claim_number = data.get('claim_number')
+            if not claim_number:
+                error_messages.append('No claim number')
 
-        # Append claim ID to the filename
-        filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
+            file_contents = file_data.get('data')
+            if not file_contents:
+                error_messages.append('No file data')
 
-        # Upload file to S3 bucket
-        s3_key = f"uploads/{filename_with_claim_id}"
-        client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
+            if error_messages:
+                return jsonify({'errors': error_messages}), 400
 
-        return redirect(url_for('upload_file'))
+            try:
+                file_contents = base64.b64decode(file_contents)
+            except:
+                return 'Invalid file data: expected base64 string'
+
+            # Append claim ID to the filename
+            filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
+
+            # Upload file to S3 bucket
+            s3_key = f"uploads/{filename_with_claim_id}"
+            client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
+
+            return redirect(url_for('upload_file'))
 
     # Get the list of files from the S3 bucket
     response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='uploads/')
-    files = [obj['Key'].split('/')[-1] for obj in response['Contents']] if 'Contents' in response else []
+    files = [obj['Key'].split('/')[-1] for obj in response.get('Contents', [])]
 
     return render_template('upload.html', files=files)
 
