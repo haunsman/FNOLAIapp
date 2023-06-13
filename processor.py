@@ -26,8 +26,11 @@ def generate_presigned_url(s3_client, bucket_name, object_key, expiration=3600):
     # The response contains the presigned URL
     return response
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> parent of 6c6774f (Update processor.py)
 def process_file(file_url):
     client = ai.Client('5a030b7d-af35-4e17-a471-28a9a253c5b7')
 
