@@ -48,6 +48,7 @@ def upload_file():
             # Upload file to S3 bucket
             s3_key = f"uploads/{filename_with_claim_id}"
             file = request.files['file']
+            return file
             print(file)
             file_contents = file.read()
             client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
