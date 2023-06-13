@@ -43,9 +43,7 @@ def upload_file():
         file_contents = base64.b64decode(file_data['data'])
 
         claim_number = data.get('claim_number')
-        return claim_number
         filename = secure_filename(file_data['name'])
-        return filename
 
         # Append claim ID to the filename
         filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
@@ -58,7 +56,7 @@ def upload_file():
     response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='uploads/')
     files = [obj['Key'].split('/')[-1] for obj in response['Contents']] if 'Contents' in response else []
 
-    return jsonify(message="File Upload Success")
+    return jsonify(message="File Upload Success" + claim_number + filename)
 
 
 @app.route('/process', methods=['POST'])
