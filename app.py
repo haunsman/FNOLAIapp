@@ -31,19 +31,33 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        data = request.get_json()  # Get the JSON body of the request
-        if 'file' not in data:
-            return 'No file part'
-        file_data = data['file']
-        
-        # Decode the base64 file data
-        file_contents = base64.b64decode(file_data['data'])
+        data = request.get_json()  # Get the JSON data from the request
 
-        claim_number = data.get('claim_number')
+        if not isinstance(data, dict):
+            return 'Invalid data: expected JSON object'
+
+        if 'file' not in data or not isinstance(data['file'], dict):
+            return 'Invalid file data'
+
+        file_data = data['file']
+
+        if 'name' not in file_data:
+            return 'No file name'
         filename = secure_filename(file_data['name'])
+
+        if 'claim_number' not in data:
+            return 'No claim number'
+        claim_number = data['claim_number']
+
+        if 'data' not in file_data:
+            return 'No file data'
+        try:
+            file_contents = base64.b64decode(file_data['data'])
+        except:
+            return 'Invalid file data: expected base64 string'
 
         # Append claim ID to the filename
         filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
