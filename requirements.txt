@@ -11,4 +11,4 @@ superai
 boto3
 botocore
 asyncio
-asycnpg
+asyncpg
