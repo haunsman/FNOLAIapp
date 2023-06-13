@@ -43,7 +43,9 @@ def upload_file():
         file_contents = base64.b64decode(file_data['data'])
 
         claim_number = data.get('claim_number')
+        return claim_number
         filename = secure_filename(file_data['name'])
+        return filename
 
         # Append claim ID to the filename
         filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
