@@ -56,7 +56,7 @@ def upload_file():
     response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='uploads/')
     files = [obj['Key'].split('/')[-1] for obj in response['Contents']] if 'Contents' in response else []
 
-    return jsonify(message="File Upload Success" + claim_number + filename)
+    return jsonify(message="File Upload Success" + str(claim_number) + str(filename))
 
 
 @app.route('/process', methods=['POST'])
