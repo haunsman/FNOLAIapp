@@ -39,9 +39,6 @@ def upload_file():
         if not isinstance(data, dict):
             return 'Invalid data: expected JSON object'
 
-        if 'file' not in data or not isinstance(data['file'], dict):
-            return 'Invalid file data'
-
         file_data = data['file']
 
         if 'name' not in file_data:
