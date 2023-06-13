@@ -30,7 +30,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/upload', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -47,6 +47,8 @@ def upload_file():
 
             # Upload file to S3 bucket
             s3_key = f"uploads/{filename_with_claim_id}"
+            file = request.files['file']
+            print(file)
             file_contents = file.read()
             client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
 
