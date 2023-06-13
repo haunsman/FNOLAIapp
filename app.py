@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template
+from flask import Flask, request, redirect, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 import os
 import processor
@@ -52,13 +52,11 @@ def upload_file():
         s3_key = f"uploads/{filename_with_claim_id}"
         client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
 
-        return redirect(url_for('upload_file'))
-
     # Get the list of files from the S3 bucket
     response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='uploads/')
     files = [obj['Key'].split('/')[-1] for obj in response['Contents']] if 'Contents' in response else []
 
-    return render_template('upload.html', files=files)
+    return jsonify(message="File Upload Success")
 
 
 @app.route('/process', methods=['POST'])
