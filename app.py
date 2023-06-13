@@ -5,6 +5,7 @@ import processor
 import json
 import boto3
 import botocore
+import base64
 
 app = Flask(__name__)
 
@@ -33,27 +34,25 @@ def allowed_file(filename):
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        if 'file' not in request.files:
+        data = request.get_json()  # Get the JSON body of the request
+        if 'file' not in data:
             return 'No file part'
-        file = request.files['file']
-        if file.filename == '':
-            return 'No selected file'
-        claim_number = request.form.get('claim_number')
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
+        file_data = data['file']
+        
+        # Decode the base64 file data
+        file_contents = base64.b64decode(file_data['data'])
 
-            # Append claim ID to the filename
-            filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
+        claim_number = data.get('claim_number')
+        filename = secure_filename(file_data['name'])
 
-            # Upload file to S3 bucket
-            s3_key = f"uploads/{filename_with_claim_id}"
-            file = request.files['file']
-            return file
-            print(file)
-            file_contents = file.read()
-            client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
+        # Append claim ID to the filename
+        filename_with_claim_id = f"{os.path.splitext(filename)[0]}CID{claim_number}{os.path.splitext(filename)[1]}"
 
-            return redirect(url_for('upload_file'))
+        # Upload file to S3 bucket
+        s3_key = f"uploads/{filename_with_claim_id}"
+        client.put_object(Bucket=S3_BUCKET_NAME, Key=s3_key, Body=file_contents)
+
+        return redirect(url_for('upload_file'))
 
     # Get the list of files from the S3 bucket
     response = client.list_objects_v2(Bucket=S3_BUCKET_NAME, Prefix='uploads/')
