@@ -35,6 +35,7 @@ def allowed_file(filename):
 def upload_file():
     if request.method == 'POST':
         data = request.get_json()  # Get the JSON body of the request
+        print(data)
         if 'file' not in data:
             return 'No file part'
         file_data = data['file']
