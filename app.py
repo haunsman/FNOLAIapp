@@ -42,7 +42,7 @@ def upload_file():
         # Decode the base64 file data
         file_contents = base64.b64decode(file_data['data'])
 
-        claim_number = data.get('claim_number')
+        claim_number = file_data['claim_number']
         filename = secure_filename(file_data['name'])
 
         # Append claim ID to the filename
